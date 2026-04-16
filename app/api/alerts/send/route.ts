@@ -39,6 +39,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, alerted: 0, revalidated: true });
   }
 
+  // Auto-stamp last_material_update — re-locks one-time buyers whose
+  // purchase predates this update. Same action that triggers watchlist
+  // emails also invalidates stale single-report access.
+  await sanityServerClient
+    .patch(`deal-${slug}`)
+    .set({ last_material_update: new Date().toISOString() })
+    .commit();
+
   const deal = await sanityServerClient.fetch<{
     acquirer: string;
     target: string;
