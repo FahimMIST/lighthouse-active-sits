@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export function PaywallGate() {
+export function PaywallGate({ isSignedIn = false }: { isSignedIn?: boolean }) {
   return (
     <section className="rounded-lg border border-gray-200 bg-white px-7 py-8 text-center">
       <div className="mb-2 text-[10px] font-medium uppercase tracking-label text-gray-500">
@@ -40,12 +40,14 @@ export function PaywallGate() {
         >
           Subscribe — $499/mo
         </Link>
-        <Link
-          href="/sign-in"
-          className="text-[12px] text-gray-500 hover:text-brand-navy"
-        >
-          Already a member? Sign in
-        </Link>
+        {!isSignedIn && (
+          <Link
+            href="/sign-in"
+            className="text-[12px] text-gray-500 hover:text-brand-navy"
+          >
+            Already a member? Sign in
+          </Link>
+        )}
       </div>
     </section>
   );

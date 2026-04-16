@@ -91,7 +91,7 @@ export default async function DealPage({
             <DocumentLibrary docs={(deal as PaidDeal).documents} />
           </>
         ) : (
-          <PaywallGate />
+          <PaywallGate isSignedIn={!!ctx.userId} />
         )}
       </div>
 
