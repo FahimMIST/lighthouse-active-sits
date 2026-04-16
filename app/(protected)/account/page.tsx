@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { sanityClient } from "@/lib/sanity/client";
 import { groq } from "next-sanity";
 import {
   getCurrentUserContext,
   getUserWatchlist,
+  hasDealAccess,
 } from "@/lib/clerk/helpers";
+import type { UserMetadata, DealPurchase } from "@/lib/clerk/helpers";
 import { StageBadge, SectorTag } from "@/components/ui/Badge";
 import { formatDate, formatTickers } from "@/lib/format";
 import { ManageBillingButton } from "./ManageBillingButton";
@@ -20,15 +22,25 @@ const WATCHLIST_DEALS_QUERY = groq`
   }
 `;
 
+const PURCHASED_DEALS_QUERY = groq`
+  *[_type == "deal" && slug.current in $slugs] {
+    _id, acquirer, target, status, sector,
+    acquirer_ticker, target_ticker,
+    "slug": slug.current,
+    last_material_update
+  }
+`;
+
 const STATUS_LABEL: Record<string, string> = {
-  active: "Active",
-  past_due: "Past due",
+  active: "Pro",
+  past_due: "Pro (past due)",
   cancelled: "Cancelled",
   none: "Free",
 };
 
 const STATUS_BADGE: Record<string, string> = {
-  active: "bg-brand-gold-light text-brand-gold-ink border border-brand-gold/40",
+  active:
+    "bg-brand-gold-light text-brand-gold-ink border border-brand-gold/40",
   past_due: "bg-amber-50 text-amber-800 border border-amber-200",
   cancelled: "bg-gray-100 text-gray-600 border border-gray-300",
   none: "bg-gray-50 text-gray-500 border border-gray-200",
@@ -40,12 +52,41 @@ export default async function AccountPage() {
   if (!userId) return null;
 
   const user = await currentUser();
-  const slugs = await getUserWatchlist(userId);
-  const watched = slugs.length
-    ? await sanityClient.fetch<DealListItem[]>(WATCHLIST_DEALS_QUERY, { slugs })
+
+  // Fresh metadata for purchased_deals
+  const freshUser = await clerkClient.users.getUser(userId);
+  const freshMeta = (freshUser.publicMetadata ?? {}) as UserMetadata;
+  const purchases: DealPurchase[] = freshMeta.purchased_deals ?? [];
+  const purchaseSlugs = purchases.map((p) => p.slug);
+
+  // Fetch watchlist deals
+  const watchlistSlugs = await getUserWatchlist(userId);
+  const watched = watchlistSlugs.length
+    ? await sanityClient.fetch<DealListItem[]>(WATCHLIST_DEALS_QUERY, {
+        slugs: watchlistSlugs,
+      })
     : [];
 
-  const status = ctx.metadata.stripeSubscriptionStatus ?? "none";
+  // Fetch purchased deals from Sanity to check material update status
+  const purchasedDeals = purchaseSlugs.length
+    ? await sanityClient.fetch<
+        {
+          _id: string;
+          acquirer: string;
+          target: string;
+          status: string;
+          sector: string;
+          acquirer_ticker?: string;
+          target_ticker?: string;
+          slug: string;
+          last_material_update?: string;
+        }[]
+      >(PURCHASED_DEALS_QUERY, { slugs: purchaseSlugs })
+    : [];
+
+  const status = freshMeta.stripeSubscriptionStatus ?? "none";
+  const isPaid =
+    status === "active" || status === "past_due" || !!freshMeta.manualAccessGrant;
   const joined = user?.createdAt ? new Date(user.createdAt) : null;
 
   return (
@@ -66,10 +107,10 @@ export default async function AccountPage() {
             Subscription
           </h2>
         </header>
-        <dl className="grid grid-cols-2 gap-px bg-gray-100 sm:grid-cols-3">
+        <dl className="grid grid-cols-2 gap-px bg-gray-100 sm:grid-cols-4">
           <Cell label="Email" value={user?.primaryEmailAddress?.emailAddress} />
           <Cell
-            label="Tier"
+            label="Status"
             valueNode={
               <span
                 className={`inline-flex rounded px-2 py-[2px] text-[11px] font-medium uppercase tracking-label ${STATUS_BADGE[status] ?? STATUS_BADGE.none}`}
@@ -79,38 +120,117 @@ export default async function AccountPage() {
             }
           />
           <Cell
-            label="Joined"
+            label="Member since"
             value={joined ? joined.toLocaleDateString() : undefined}
+          />
+          <Cell
+            label="Reports purchased"
+            value={purchases.length > 0 ? String(purchases.length) : "0"}
           />
           {ctx.metadata.manualAccessGrant && (
             <Cell
-              label="Access granted"
+              label="Comp access"
               value={
                 ctx.metadata.manualAccessExpiry
-                  ? `Manual · until ${new Date(ctx.metadata.manualAccessExpiry).toLocaleDateString()}`
-                  : "Manual · no expiry"
+                  ? `Until ${new Date(ctx.metadata.manualAccessExpiry).toLocaleDateString()}`
+                  : "No expiry"
               }
             />
           )}
         </dl>
         <div className="flex flex-wrap items-center gap-3 border-t border-gray-100 px-5 py-4">
-          {ctx.metadata.stripeCustomerId ? (
+          {freshMeta.stripeCustomerId ? (
             <ManageBillingButton />
           ) : (
             <Link
               href="/subscribe"
               className="rounded bg-brand-navy px-4 py-2 text-[13px] font-medium text-white hover:bg-brand-navy-dark"
             >
-              Subscribe
+              Subscribe — $499/mo
             </Link>
           )}
           <span className="text-[12px] text-gray-500">
-            {ctx.metadata.stripeCustomerId
+            {freshMeta.stripeCustomerId
               ? "Manage billing, update card, or cancel via Stripe Customer Portal."
-              : "Subscribe to unlock the full deal archive and watchlist alerts."}
+              : "Subscribe to unlock all deals, watchlist alerts, and ongoing updates."}
           </span>
         </div>
       </section>
+
+      {/* Purchased reports */}
+      {purchases.length > 0 && (
+        <section className="mt-6 rounded-lg border border-gray-200 bg-white">
+          <header className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
+            <h2 className="text-[11px] font-medium uppercase tracking-label text-gray-500">
+              Purchased reports
+            </h2>
+            <span className="text-[11px] tabular-nums text-gray-500">
+              {purchases.length} {purchases.length === 1 ? "report" : "reports"}
+            </span>
+          </header>
+          <ul className="divide-y divide-gray-100">
+            {purchases.map((p) => {
+              const deal = purchasedDeals.find((d) => d.slug === p.slug);
+              const stillValid = hasDealAccess(
+                purchases,
+                p.slug,
+                deal?.last_material_update,
+              );
+              const tickers = deal
+                ? formatTickers(deal.acquirer_ticker, deal.target_ticker)
+                : undefined;
+
+              return (
+                <li
+                  key={p.slug}
+                  className="flex items-center justify-between gap-4 px-5 py-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {deal && <StageBadge status={deal.status as DealListItem["status"]} />}
+                      {tickers && (
+                        <span className="font-mono text-[11px] tracking-wide text-gray-600">
+                          {tickers}
+                        </span>
+                      )}
+                      <span
+                        className={`inline-flex rounded border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-label ${
+                          stillValid
+                            ? "border-green-200 bg-green-50 text-green-800"
+                            : "border-amber-200 bg-amber-50 text-amber-800"
+                        }`}
+                      >
+                        {stillValid ? "Active" : "Update available"}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/deals/${p.slug}`}
+                      className="mt-1 block text-[14px] font-medium text-brand-navy hover:underline"
+                    >
+                      {deal
+                        ? `${deal.acquirer} / ${deal.target}`
+                        : p.slug.replace(/-/g, " ")}
+                    </Link>
+                    <div className="mt-0.5 text-[11px] text-gray-500">
+                      Purchased {formatDate(p.purchased_at)}
+                    </div>
+                  </div>
+                  <div className="shrink-0">
+                    {!stillValid && (
+                      <Link
+                        href="/subscribe"
+                        className="rounded border border-brand-gold bg-brand-gold-light px-3 py-1.5 text-[11px] font-medium text-brand-gold-ink hover:brightness-95"
+                      >
+                        Upgrade for latest
+                      </Link>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {/* Watchlist */}
       <section className="mt-6 rounded-lg border border-gray-200 bg-white">
@@ -123,9 +243,9 @@ export default async function AccountPage() {
           </span>
         </header>
 
-        {!ctx.isPaid ? (
+        {!isPaid ? (
           <div className="px-5 py-6 text-[13px] text-gray-600">
-            Watchlist alerts are a paid feature.{" "}
+            Watchlist alerts are available with a Pro subscription.{" "}
             <Link
               href="/subscribe"
               className="text-brand-navy underline decoration-brand-gold underline-offset-2"
@@ -152,7 +272,7 @@ export default async function AccountPage() {
                 >
                   <Link
                     href={`/deals/${d.slug}`}
-                    className="min-w-0 flex-1 group"
+                    className="group min-w-0 flex-1"
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <StageBadge status={d.status} />
