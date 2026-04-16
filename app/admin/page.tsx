@@ -8,6 +8,7 @@ import {
 import type { UserMetadata } from "@/lib/clerk/helpers";
 import { isPaidStatus } from "@/lib/clerk/helpers";
 import { UserTable } from "./UserTable";
+import { RevenuePanel } from "./RevenuePanel";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +72,13 @@ export default async function AdminPage() {
         <Stat label="Manual grants" value={manualGrants} />
         <Stat label="New (7d)" value={signups7} />
         <Stat label="New (30d)" value={signups30} />
+      </section>
+
+      <section className="mt-8">
+        <h2 className="mb-3 text-[11px] font-medium uppercase tracking-label text-gray-500">
+          Revenue
+        </h2>
+        <RevenuePanel />
       </section>
 
       <section className="mt-8">
