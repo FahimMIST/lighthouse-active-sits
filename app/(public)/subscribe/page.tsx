@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { SubscribeButton } from "./SubscribeButton";
+import { CheckoutSuccess } from "@/components/deals/CheckoutSuccess";
 
 const PLAN = {
   name: "Professional",
@@ -46,6 +47,7 @@ export default function SubscribePage() {
   const { userId } = auth();
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
+      <CheckoutSuccess />
       <header className="border-b border-gray-200 pb-8 text-center">
         <div className="text-[11px] font-medium uppercase tracking-label text-brand-gold-ink">
           Pricing

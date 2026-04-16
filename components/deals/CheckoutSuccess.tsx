@@ -25,12 +25,10 @@ export function CheckoutSuccess() {
           const data = await res.json();
           if (data.isPaid) {
             setStatus("ready");
-            // Small delay so the user sees the success message
+            // Small delay so the user sees the success message, then
+            // redirect to the deals index (not back to pricing).
             setTimeout(() => {
-              // Reload without the query param
-              const url = new URL(window.location.href);
-              url.searchParams.delete("checkout");
-              window.location.replace(url.toString());
+              window.location.replace("/");
             }, 1500);
             return;
           }
