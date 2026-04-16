@@ -20,6 +20,7 @@ import { CtfnAnalysis } from "@/components/deals/CtfnAnalysis";
 import { ShareholderActivism } from "@/components/deals/ShareholderActivism";
 import { CollapsibleProse } from "@/components/deals/CollapsibleProse";
 import { DocumentLibrary } from "@/components/deals/DocumentLibrary";
+import { CheckoutSuccess } from "@/components/deals/CheckoutSuccess";
 import { FollowButton } from "@/components/ui/FollowButton";
 
 export const revalidate = 60;
@@ -52,6 +53,7 @@ export default async function DealPage({
 
   return (
     <main className="mx-auto max-w-[720px] px-6 pt-10">
+      <CheckoutSuccess />
       <DealHeader deal={deal} followControl={followControl} />
 
       <div className="mt-7 space-y-6">
