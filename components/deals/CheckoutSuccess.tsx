@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 export function CheckoutSuccess() {
   const params = useSearchParams();
   const isSuccess = params.get("checkout") === "success";
+  const sessionId = params.get("session_id");
   const [status, setStatus] = useState<"polling" | "ready" | "timeout">(
     "polling",
   );
@@ -21,7 +22,8 @@ export function CheckoutSuccess() {
       while (!cancelled && attempts < maxAttempts) {
         attempts++;
         try {
-          const res = await fetch("/api/auth/check");
+          const qs = sessionId ? `?session_id=${sessionId}` : "";
+          const res = await fetch(`/api/auth/check${qs}`);
           const data = await res.json();
           if (data.isPaid) {
             setStatus("ready");

@@ -10,7 +10,7 @@ export async function createCheckoutSession(opts: {
     payment_method_types: ["card"],
     customer_email: opts.email,
     line_items: [{ price: process.env.STRIPE_PAID_PRICE_ID!, quantity: 1 }],
-    success_url: `${opts.returnUrl}?checkout=success`,
+    success_url: `${opts.returnUrl}?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${opts.returnUrl}?checkout=cancelled`,
     client_reference_id: opts.clerkUserId,
     metadata: { clerkUserId: opts.clerkUserId },
