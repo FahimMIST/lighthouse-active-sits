@@ -5,10 +5,13 @@ import {
   PAID_DEAL_QUERY,
 } from "@/lib/sanity/queries";
 import type { PaidDeal, PublicDeal } from "@/lib/sanity/types";
+import { clerkClient } from "@clerk/nextjs/server";
 import {
   getCurrentUserContext,
   getUserWatchlist,
+  isPaidStatus,
 } from "@/lib/clerk/helpers";
+import type { UserMetadata } from "@/lib/clerk/helpers";
 import { DealHeader } from "@/components/deals/DealHeader";
 import { SnapshotCard } from "@/components/deals/SnapshotCard";
 import { KeyRiskPull } from "@/components/deals/KeyRiskPull";
@@ -32,8 +35,17 @@ export default async function DealPage({
 }) {
   const ctx = await getCurrentUserContext();
 
+  // Read fresh metadata so content unlocks immediately after payment
+  // (JWT session claims can lag by up to 60s).
+  let paid = ctx.isPaid;
+  if (ctx.userId && !paid) {
+    const freshUser = await clerkClient.users.getUser(ctx.userId);
+    const freshMeta = (freshUser.publicMetadata ?? {}) as UserMetadata;
+    paid = isPaidStatus(freshMeta);
+  }
+
   // Layer-3 gating: only fetch paid fields if user is paid
-  const deal = ctx.isPaid
+  const deal = paid
     ? await sanityServerClient.fetch<PaidDeal>(PAID_DEAL_QUERY, {
         slug: params.slug,
       })
@@ -44,10 +56,10 @@ export default async function DealPage({
   if (!deal) notFound();
 
   const watchlist =
-    ctx.userId && ctx.isPaid ? await getUserWatchlist(ctx.userId) : [];
+    ctx.userId && paid ? await getUserWatchlist(ctx.userId) : [];
   const isFollowing = watchlist.includes(params.slug);
   const followControl =
-    ctx.isPaid && ctx.userId ? (
+    paid && ctx.userId ? (
       <FollowButton slug={params.slug} initialFollowing={isFollowing} />
     ) : null;
 
@@ -57,11 +69,11 @@ export default async function DealPage({
       <DealHeader deal={deal} followControl={followControl} />
 
       <div className="mt-7 space-y-6">
-        <SnapshotCard deal={deal} isPaid={ctx.isPaid} />
+        <SnapshotCard deal={deal} isPaid={paid} />
 
         {deal.key_risk_summary && <KeyRiskPull text={deal.key_risk_summary} />}
 
-        {ctx.isPaid ? (
+        {paid ? (
           <>
             <KeyFactsTable deal={deal as PaidDeal} />
 

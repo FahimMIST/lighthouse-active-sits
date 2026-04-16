@@ -1,22 +1,33 @@
+import { clerkClient } from "@clerk/nextjs/server";
 import { sanityClient } from "@/lib/sanity/client";
 import { ACTIVE_DEALS_QUERY } from "@/lib/sanity/queries";
 import type { DealListItem } from "@/lib/sanity/types";
 import { FilterBar } from "@/components/filters/FilterBar";
 import { DealGrid } from "@/components/deals/DealGrid";
 import { SubscriptionBanner } from "@/components/layout/SubscriptionBanner";
-import { getCurrentUserContext } from "@/lib/clerk/helpers";
+import { getCurrentUserContext, isPaidStatus } from "@/lib/clerk/helpers";
+import type { UserMetadata } from "@/lib/clerk/helpers";
 
 export const revalidate = 60;
 
 export default async function IndexPage() {
-  const [{ isPaid, userId }, deals] = await Promise.all([
+  const [ctx, deals] = await Promise.all([
     getCurrentUserContext(),
     sanityClient.fetch<DealListItem[]>(ACTIVE_DEALS_QUERY),
   ]);
 
+  // Read fresh metadata from Clerk API (not stale JWT) so the lock
+  // badges disappear immediately after payment.
+  let paid = ctx.isPaid;
+  if (ctx.userId && !paid) {
+    const freshUser = await clerkClient.users.getUser(ctx.userId);
+    const freshMeta = (freshUser.publicMetadata ?? {}) as UserMetadata;
+    paid = isPaidStatus(freshMeta);
+  }
+
   return (
     <main>
-      {!userId && <SubscriptionBanner />}
+      {!ctx.userId && <SubscriptionBanner />}
 
       <div className="border-b border-gray-200">
         <div className="mx-auto max-w-7xl px-6 py-8 sm:py-10">
@@ -33,7 +44,7 @@ export default async function IndexPage() {
       <FilterBar />
 
       <div className="mx-auto max-w-7xl">
-        <DealGrid deals={deals} isPaid={isPaid} />
+        <DealGrid deals={deals} isPaid={paid} />
       </div>
     </main>
   );

@@ -25,7 +25,7 @@ export function DealCard({
     >
       {locked && (
         <div className="absolute right-3 top-3 rounded bg-brand-navy/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-label text-brand-gold">
-          🔒 Members
+          🔒 Pro
         </div>
       )}
       <div className="flex flex-wrap items-center gap-2">
