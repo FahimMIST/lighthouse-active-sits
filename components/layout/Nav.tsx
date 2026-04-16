@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { GlobalSearch } from "./GlobalSearch";
+import { SubBadge } from "./SubBadge";
 
 export function Nav() {
   return (
@@ -48,9 +49,10 @@ export function Nav() {
             <SignedIn>
               <Link
                 href="/account"
-                className="tracking-wide text-white/60 hover:text-white"
+                className="flex items-center gap-1.5 tracking-wide text-white/60 hover:text-white"
               >
                 Account
+                <SubBadge />
               </Link>
               <UserButton afterSignOutUrl="/" />
             </SignedIn>

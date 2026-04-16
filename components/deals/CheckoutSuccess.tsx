@@ -1,9 +1,11 @@
 "use client";
 
+import { useClerk } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export function CheckoutSuccess() {
+  const { session } = useClerk();
   const params = useSearchParams();
   const isSuccess = params.get("checkout") === "success";
   const sessionId = params.get("session_id");
@@ -27,6 +29,13 @@ export function CheckoutSuccess() {
           const data = await res.json();
           if (data.isPaid) {
             setStatus("ready");
+            // Force Clerk to refresh the JWT so the next page load
+            // has the updated publicMetadata (stripeSubscriptionStatus).
+            try {
+              await session?.touch();
+            } catch {
+              // Non-critical — page reload will pick it up eventually.
+            }
             // Small delay so the user sees the success message, then
             // redirect to the deals index (not back to pricing).
             setTimeout(() => {
