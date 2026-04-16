@@ -39,10 +39,10 @@ export function PaywallGate({
             </div>
             <ul className="mt-4 flex-1 space-y-1.5">
               {[
-                "Full analysis for this deal",
-                "Regulatory filings + activism",
-                "Documents + key facts",
-                "Point-in-time snapshot access",
+                "Full CTFN analysis + risk factors",
+                "Regulatory filings + shareholder activism",
+                "Key facts, documents + advisors",
+                "All updates until deal closes",
               ].map((f) => (
                 <li
                   key={f}
