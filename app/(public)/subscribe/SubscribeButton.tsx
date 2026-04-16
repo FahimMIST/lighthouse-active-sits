@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export function SubscribeButton() {
+export function SubscribeButton({ label = "Subscribe" }: { label?: string }) {
   const [loading, setLoading] = useState(false);
   async function go() {
     setLoading(true);
@@ -21,9 +21,9 @@ export function SubscribeButton() {
     <button
       onClick={go}
       disabled={loading}
-      className="rounded bg-brand-navy px-5 py-2.5 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+      className="w-full rounded bg-brand-navy px-5 py-2.5 text-[13px] font-medium text-white hover:bg-brand-navy-dark disabled:opacity-50"
     >
-      {loading ? "Redirecting…" : "Subscribe with Stripe"}
+      {loading ? "Redirecting…" : label}
     </button>
   );
 }

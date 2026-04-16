@@ -9,33 +9,33 @@ export function PaywallGate() {
       <h3 className="font-serif text-[20px] font-normal text-brand-navy">
         Full intelligence on this situation
       </h3>
-      <p className="mx-auto mt-2 max-w-[380px] text-[13px] leading-[1.6] text-gray-600">
-        Subscribe to unlock the complete regulatory timeline, EC and CMA
-        analysis, advisor details, key documents, and CTFN&apos;s proprietary
-        closing estimate methodology.
+      <p className="mx-auto mt-2 max-w-[420px] text-[13px] leading-[1.6] text-gray-600">
+        Subscribe to unlock CTFN analysis, regulatory lifecycle tracking,
+        deal documents, shareholder activism, and proprietary closing
+        estimates.
       </p>
 
-      <div className="mx-auto mt-5 grid max-w-[440px] grid-cols-1 gap-3 text-left sm:grid-cols-2">
+      <div className="mx-auto mt-6 grid max-w-[480px] grid-cols-1 gap-3 text-left sm:grid-cols-2">
         <PlanCard
-          name="Starter"
-          price="$29"
-          per="one-time download"
+          name="Standard"
+          price="$499"
+          per="per month"
           features={[
-            "This report, 4 deals",
-            "PDF download",
-            "One-time access",
+            "Full gated content on all deals",
+            "CTFN analysis + regulatory filings",
+            "Updates every 15 days",
           ]}
         />
         <PlanCard
           featured
-          name="Situations monthly"
-          price="$49"
+          name="Pro"
+          price="$799"
           per="per month"
           features={[
-            "10 deals, editor's choice",
-            "Web reader + PDF",
-            "Twice-monthly updates",
-            "Deal movement alerts",
+            "Everything in Standard",
+            "Instant deal updates",
+            "Watchlist + email alerts",
+            "Priority access to new deals",
           ]}
         />
       </div>
@@ -45,13 +45,13 @@ export function PaywallGate() {
           href="/subscribe"
           className="rounded bg-brand-navy px-7 py-2.5 text-[12px] font-medium tracking-wide text-white hover:bg-brand-navy-dark"
         >
-          Subscribe — $49/mo
+          View pricing
         </Link>
         <Link
-          href="/subscribe"
+          href="/sign-in"
           className="rounded border border-gray-300 px-4 py-2.5 text-[12px] font-medium text-gray-600 hover:border-brand-navy"
         >
-          Get one-time report
+          Sign in
         </Link>
       </div>
     </section>
@@ -84,10 +84,12 @@ function PlanCard({
       >
         {name}
       </div>
-      <div className="mt-1 text-[22px] font-semibold tabular-nums text-brand-navy">
-        {price}
+      <div className="mt-1 flex items-baseline gap-1.5 tabular-nums">
+        <span className="text-[22px] font-semibold text-brand-navy">
+          {price}
+        </span>
+        <span className="text-[11px] text-gray-500">{per}</span>
       </div>
-      <div className="text-[11px] text-gray-500">{per}</div>
       <ul className="mt-3 space-y-1.5">
         {features.map((f) => (
           <li
