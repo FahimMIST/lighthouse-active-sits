@@ -38,7 +38,7 @@ export function FollowButton({
           : "border-gray-300 bg-white text-brand-navy hover:border-brand-navy"
       }`}
     >
-      {following ? "★ Following" : "☆ Follow this deal (Pro)"}
+      {following ? "★ Following" : "☆ Follow this deal"}
     </button>
   );
 }

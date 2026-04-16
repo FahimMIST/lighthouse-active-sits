@@ -15,92 +15,38 @@ export function PaywallGate() {
         estimates.
       </p>
 
-      <div className="mx-auto mt-6 grid max-w-[480px] grid-cols-1 gap-3 text-left sm:grid-cols-2">
-        <PlanCard
-          name="Standard"
-          price="$499"
-          per="per month"
-          features={[
-            "Full gated content on all deals",
-            "CTFN analysis + regulatory filings",
-            "Updates every 15 days",
-          ]}
-        />
-        <PlanCard
-          featured
-          name="Pro"
-          price="$799"
-          per="per month"
-          features={[
-            "Everything in Standard",
-            "Instant deal updates",
-            "Watchlist + email alerts",
-            "Priority access to new deals",
-          ]}
-        />
-      </div>
-
-      <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-        <Link
-          href="/subscribe"
-          className="rounded bg-brand-navy px-7 py-2.5 text-[12px] font-medium tracking-wide text-white hover:bg-brand-navy-dark"
-        >
-          View pricing
-        </Link>
-        <Link
-          href="/sign-in"
-          className="rounded border border-gray-300 px-4 py-2.5 text-[12px] font-medium text-gray-600 hover:border-brand-navy"
-        >
-          Sign in
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-function PlanCard({
-  featured = false,
-  name,
-  price,
-  per,
-  features,
-}: {
-  featured?: boolean;
-  name: string;
-  price: string;
-  per: string;
-  features: string[];
-}) {
-  return (
-    <div
-      className={`rounded border p-4 ${
-        featured ? "border-[1.5px] border-brand-gold" : "border-gray-200"
-      }`}
-    >
-      <div
-        className={`text-[11px] font-medium uppercase tracking-label ${
-          featured ? "text-brand-gold-ink" : "text-gray-500"
-        }`}
-      >
-        {name}
-      </div>
-      <div className="mt-1 flex items-baseline gap-1.5 tabular-nums">
-        <span className="text-[22px] font-semibold text-brand-navy">
-          {price}
-        </span>
-        <span className="text-[11px] text-gray-500">{per}</span>
-      </div>
-      <ul className="mt-3 space-y-1.5">
-        {features.map((f) => (
+      <ul className="mx-auto mt-5 max-w-xs space-y-2 text-left">
+        {[
+          "Full CTFN editorial analysis + risk factors",
+          "Per-regulator filing lifecycle with step tracking",
+          "Shareholder activism + voting agreements",
+          "Deal documents, advisors, key facts",
+          "Watchlist alerts when situations move",
+        ].map((f) => (
           <li
             key={f}
-            className="flex items-start gap-1.5 text-[12px] leading-[1.5] text-gray-600"
+            className="flex items-start gap-2 text-[13px] leading-[1.5] text-gray-700"
           >
             <span className="mt-[5px] block h-1 w-1 shrink-0 rounded-full bg-brand-gold" />
             {f}
           </li>
         ))}
       </ul>
-    </div>
+
+      <div className="mt-6 flex flex-col items-center gap-2">
+        <Link
+          href="/subscribe"
+          className="rounded bg-brand-navy px-8 py-2.5 text-[13px] font-medium text-white hover:bg-brand-navy-dark"
+        >
+          Subscribe — $499/mo
+        </Link>
+        <Link
+          href="/sign-in"
+          className="text-[12px] text-gray-500 hover:text-brand-navy"
+        >
+          Already a member? Sign in
+        </Link>
+      </div>
+    </section>
   );
 }
